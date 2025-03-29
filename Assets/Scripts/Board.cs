@@ -10,17 +10,22 @@ public class Board : MonoBehaviour
     public int borderSize;
 
     public GameObject tilePrefab;
+    public GameObject[] gamePiecePrefabs;
 
     Tile[,] m_allTiles;
+    GamePiece[,] m_allGamePieces;
     // Start is called before the first frame update
     void Start()
     {
         m_allTiles = new Tile[width, height];
+        m_allGamePieces = new GamePiece[width, height];
+
         SetupTile();
         SetupCamera();
+        FillRandom();
     }
 
-    private void SetupTile()
+    void SetupTile()
     {
         for (int i = 0; i < width; i++)
         {
@@ -40,11 +45,54 @@ public class Board : MonoBehaviour
 
     void SetupCamera()
     {
-        Camera.main.transform.position = new Vector3((float)(width-1)/2f, (float)(height-1) / 2f, -10f);
+        Camera.main.transform.position = new Vector3((float)(width - 1) / 2f, (float)(height - 1) / 2f, -10f);
         float aspectRatio = (float)Screen.width / (float)Screen.height;
         float verticalSize = (float)height / 2f + (float)borderSize;
         float horizontalSize = ((float)width + (float)borderSize) / 2f / aspectRatio;
         Camera.main.orthographicSize = (verticalSize > horizontalSize) ? verticalSize : horizontalSize;
 
     }
+
+    GameObject GetRandomPiece()
+    {
+        int randomIdx = Random.Range(0, gamePiecePrefabs.Length);
+        if (gamePiecePrefabs[randomIdx] == null)
+        {
+            Debug.LogWarning("BOARD: " + randomIdx + "does not contain a valid GamePiece prefab!");
+        }
+        return gamePiecePrefabs[randomIdx];
+    }
+
+    void PlaceGamePiece(GamePiece gamePiece, int x, int y)
+    {
+        if (gamePiece == null)
+        {
+            Debug.LogWarning("BOARD: Invalid GamePiece!");
+            return;
+        }
+
+        gamePiece.transform.position = new Vector3(x, y, 0);
+        gamePiece.transform.rotation = Quaternion.identity;
+        gamePiece.SetCoord(x, y);
+
+    }
+
+    void FillRandom()
+    {
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                GameObject randomPiece = Instantiate(GetRandomPiece(), Vector2.zero, Quaternion.identity);
+
+                if (randomPiece != null)
+                {
+                    randomPiece.name = "GamePiece (" + i + "," + j + ")";
+                    PlaceGamePiece(randomPiece.GetComponent<GamePiece>(), i, j);
+                }
+                
+            }
+        }
+    }
+
 }

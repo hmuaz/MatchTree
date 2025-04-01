@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 public class Board : MonoBehaviour
 {
@@ -19,7 +21,6 @@ public class Board : MonoBehaviour
 
     Tile m_clickedTile;
     Tile m_targetTile;
-
 
     void Start()
     {
@@ -118,9 +119,9 @@ public class Board : MonoBehaviour
                 }
 
 
+
             }
         }
-
     }
 
     public void ClickTile(Tile tile)
@@ -147,9 +148,9 @@ public class Board : MonoBehaviour
             SwitchTiles(m_clickedTile, m_targetTile);
         }
 
+
         m_clickedTile = null;
         m_targetTile = null;
-
     }
 
     void SwitchTiles(Tile clickedTile, Tile targetTile)
@@ -158,9 +159,9 @@ public class Board : MonoBehaviour
         GamePiece clickedPiece = m_allGamePieces[clickedTile.xIndex, clickedTile.yIndex];
         GamePiece targetPiece = m_allGamePieces[targetTile.xIndex, targetTile.yIndex];
 
+
         clickedPiece.Move(targetTile.xIndex, targetTile.yIndex, swapTime);
         targetPiece.Move(clickedTile.xIndex, clickedTile.yIndex, swapTime);
-
 
     }
 
@@ -178,5 +179,65 @@ public class Board : MonoBehaviour
 
         return false;
     }
+
+    
+
+    List<GamePiece> FindMatches(int startX, int startY, Vector2 searchDirection, int minLength = 3)
+    {
+        List<GamePiece> matches = new List<GamePiece>();
+
+        GamePiece startPiece = null;
+
+        if (IsWithinBounds(startX, startY))
+        {
+            startPiece = m_allGamePieces[startX, startY];
+        }
+
+        if (startPiece != null)
+        {
+            matches.Add(startPiece);
+        }
+        else
+        {
+            return null;
+        }
+
+        int nextX;
+        int nextY;
+
+        int maxValue = (width > height) ? width : height;
+
+        for (int i = 1; i < maxValue - 1; i++)
+        {
+            nextX = startX + (int)Mathf.Clamp(searchDirection.x, -1, 1) * i;
+            nextY = startY + (int)Mathf.Clamp(searchDirection.y, -1, 1) * i;
+
+            if (!IsWithinBounds(nextX, nextY))
+            {
+                break;
+            }
+
+            GamePiece nextPiece = m_allGamePieces[nextX, nextY];
+
+            if (nextPiece.matchValue == startPiece.matchValue && !matches.Contains(nextPiece))
+            {
+                matches.Add(nextPiece);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (matches.Count >= minLength)
+        {
+            return matches;
+        }
+
+        return null;
+
+    }
+
+
 
 }

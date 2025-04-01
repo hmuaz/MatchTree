@@ -1,13 +1,18 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 
 public class GamePiece : MonoBehaviour
 {
+
     public int xIndex;
     public int yIndex;
 
+    Board m_board;
+
+    bool m_isMoving = false;
+
     public InterpType interpolation = InterpType.SmootherStep;
+
     public enum InterpType
     {
         Linear,
@@ -15,10 +20,10 @@ public class GamePiece : MonoBehaviour
         EaseIn,
         SmoothStep,
         SmootherStep
-    }; 
+    };
 
-    bool m_isMoving = false;
-    // Start is called before the first frame update
+
+    // Use this for initialization
     void Start()
     {
 
@@ -27,10 +32,25 @@ public class GamePiece : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            Move((int)transform.position.x + 1, (int)transform.position.y, 0.5f);
-        }
+        /*
+		if (Input.GetKeyDown(KeyCode.RightArrow))
+		{
+			Move((int)transform.position.x + 2, (int) transform.position.y, 0.5f);
+
+		}
+
+		if (Input.GetKeyDown(KeyCode.LeftArrow))
+		{
+			Move((int)transform.position.x - 2, (int) transform.position.y, 0.5f);
+
+		}
+		*/
+
+    }
+
+    public void Init(Board board)
+    {
+        m_board = board;
     }
 
     public void SetCoord(int x, int y)
@@ -41,32 +61,51 @@ public class GamePiece : MonoBehaviour
 
     public void Move(int destX, int destY, float timeToMove)
     {
-        if(!m_isMoving)
-        StartCoroutine(MoveRoutine(new Vector3(destX, destY, 0), timeToMove));
+
+        if (!m_isMoving)
+        {
+
+            StartCoroutine(MoveRoutine(new Vector3(destX, destY, 0), timeToMove));
+        }
     }
+
 
     IEnumerator MoveRoutine(Vector3 destination, float timeToMove)
     {
         Vector3 startPosition = transform.position;
+
         bool reachedDestination = false;
+
         float elapsedTime = 0f;
 
         m_isMoving = true;
+
         while (!reachedDestination)
         {
+            // if we are close enough to destination
             if (Vector3.Distance(transform.position, destination) < 0.01f)
             {
+
+
                 reachedDestination = true;
-                transform.position = destination;
-                SetCoord((int)destination.x, (int)destination.y);
+
+                if (m_board != null)
+                {
+                    m_board.PlaceGamePiece(this, (int)destination.x, (int)destination.y);
+
+                }
+
                 break;
             }
 
+            // track the total running time
             elapsedTime += Time.deltaTime;
+
+            // calculate the Lerp value
             float t = Mathf.Clamp(elapsedTime / timeToMove, 0f, 1f);
 
             switch (interpolation)
-            {   
+            {
                 case InterpType.Linear:
                     break;
                 case InterpType.EaseOut:
@@ -74,26 +113,25 @@ public class GamePiece : MonoBehaviour
                     break;
                 case InterpType.EaseIn:
                     t = 1 - Mathf.Cos(t * Mathf.PI * 0.5f);
-
                     break;
                 case InterpType.SmoothStep:
                     t = t * t * (3 - 2 * t);
-
                     break;
                 case InterpType.SmootherStep:
-                    t = t * t * t * (t * (6 - 15) + 10);
-                    break;
-                default:
-                    t = t * t * t * (t * (6 - 15) + 10);
+                    t = t * t * t * (t * (t * 6 - 15) + 10);
                     break;
             }
 
-
+            // move the game piece
             transform.position = Vector3.Lerp(startPosition, destination, t);
 
+            // wait until next frame
             yield return null;
         }
+
         m_isMoving = false;
 
+
     }
+
 }
